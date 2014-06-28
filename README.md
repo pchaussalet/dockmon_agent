@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/pchaussalet/dockmon_agent.svg?branch=master)](https://travis-ci.org/pchaussalet/dockmon_agent)
+
 DockMon agent
 =============
 

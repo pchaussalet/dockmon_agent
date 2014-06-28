@@ -1,1 +1,6 @@
 language:   go
+before_install:
+    -   export GOPATH=`pwd`
+install:
+    -   go get github.com/stretchr/testify
+script: go test plugins/containers plugins/cpuMetrics plugins/memoryMetrics plugins/networkMetrics

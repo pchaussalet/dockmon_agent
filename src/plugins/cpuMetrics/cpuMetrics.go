@@ -18,9 +18,17 @@ func Grab(dataSource func(string) []string, containerId string) CpuStruct {
 		elements := strings.Split(lines[i], " ")
 		switch elements[0] {
 		case "user" :
-			user, _ = strconv.ParseInt(elements[1], 10, 64)
+			intVal, err := strconv.ParseInt(elements[1], 10, 64)
+			if err != nil {
+				panic(err)
+			}
+			user = intVal
 		case "system" :
-			system, _ = strconv.ParseInt(elements[1], 10, 64)
+			intVal, err := strconv.ParseInt(elements[1], 10, 64)
+			if err != nil {
+				panic(err)
+			}
+			system = intVal
 		}
 	}
 

@@ -4,13 +4,15 @@ import (
 	"plugins/containers"
 	"plugins/memoryMetrics"
 	"encoding/json"
-	"fmt"
 	"plugins/cpuMetrics"
 	"plugins/networkMetrics"
 	"flag"
 	"io/ioutil"
 	"services"
 	"strings"
+	"net/http"
+	"os"
+	"fmt"
 )
 
 
@@ -24,6 +26,7 @@ type dataStruct struct {
 type agentConf struct {
 	DockerUrl			string
 	CgroupDockerPrefix	string
+	CollectorUrl		string
 }
 
 func readConf() agentConf {
@@ -31,13 +34,15 @@ func readConf() agentConf {
 	flag.StringVar(&confFile, "c", "/etc/dockmon_agent.conf", "Configuration file location (absolute path)")
 	flag.Parse()
 	var conf agentConf
-	confJson, _ := ioutil.ReadFile(confFile)
+	confJson, err := ioutil.ReadFile(confFile)
+	if err != nil {
+		panic(err)
+	}
 	json.Unmarshal(confJson, &conf)
 	return conf
 }
 
-func getJsonData() map[string] *dataStruct {
-	conf := readConf()
+func getJsonData(conf agentConf) map[string] *dataStruct {
 	dockerService := &services.DockerService{Url: conf.DockerUrl}
 	cgroupService := &services.CgroupService{DockerPrefix: conf.CgroupDockerPrefix}
 	containersMap := containers.List(dockerService.List)
@@ -73,6 +78,20 @@ func getJsonData() map[string] *dataStruct {
 
 
 func main() {
-	jsonData, _ := json.Marshal(getJsonData())
-	fmt.Println(string(jsonData))
+	conf := readConf()
+	jsonData, err := json.Marshal(getJsonData(conf))
+	if err != nil {
+		panic(err)
+	}
+	hostname, err := os.Hostname()
+	if err != nil {
+		panic(err)
+	}
+	response, err := http.Post(conf.CollectorUrl + "/server/" + hostname, "application/json", strings.NewReader(string(jsonData)))
+	if err != nil {
+		panic(err)
+	}
+	if response.StatusCode > 399 {
+		fmt.Errorf("status code received : " + string(response.StatusCode))
+	}
 }

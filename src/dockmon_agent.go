@@ -27,6 +27,7 @@ type agentConf struct {
 	DockerUrl			string
 	CgroupDockerPrefix	string
 	CollectorUrl		string
+	AccountId			string
 }
 
 func readConf() agentConf {
@@ -87,10 +88,22 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	response, err := http.Post(conf.CollectorUrl + "/server/" + hostname, "application/json", strings.NewReader(string(jsonData)))
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", conf.CollectorUrl + "/server/" + hostname, strings.NewReader(string(jsonData)))
 	if err != nil {
 		panic(err)
 	}
+	req.Header.Add("content-type", "application/json")
+	req.Header.Add("x-user", conf.AccountId)
+	response, err := client.Do(req)
+//	response, err := http.Post(conf.CollectorUrl + "/server/" + hostname, "application/json", strings.NewReader(string(jsonData)))
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(conf.CollectorUrl + "/server/" + hostname)
+	fmt.Println(string(jsonData))
+
 	if response.StatusCode > 399 {
 		fmt.Errorf("status code received : " + string(response.StatusCode))
 	}
